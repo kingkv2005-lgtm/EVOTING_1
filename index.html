@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Voter Information</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .card {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card" id="loginCard">
+  <h2>Admin Login</h2>
+  <input type="text" id="username" placeholder="Username" />
+  <input type="password" id="password" placeholder="Password" />
+  <button id="loginBtn">Login</button>
+</div>
+
+<div class="card hidden" id="voterCard">
+  <h2>Voter Information</h2>
+  <p><strong>Name:</strong> <span id="voterName"></span></p>
+  <p><strong>DOB:</strong> <span id="voterDOB"></span></p>
+  <p><strong>Voter ID:</strong> <span id="voterID"></span></p>
+  <p><strong>Fingerprint Template:</strong> <span id="voterFingerprint"></span></p>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyARC0sOozRd1K6ygk_XLtiqikJsHE6mXcg",
+    authDomain: "smartevm-1cec6.firebaseapp.com",
+    projectId: "smartevm-1cec6",
+    storageBucket: "smartevm-1cec6.appspot.com",
+    messagingSenderId: "431157803094",
+    appId: "1:431157803094:web:988895395d0497dcc0a3f7",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const ADMIN_USERNAME = "admin";
+  const ADMIN_PASSWORD = "1234";
+
+  // Get voter ID from URL or fallback to default
+  const voterIDFromURL = new URLSearchParams(window.location.search).get("voterID") || "1818";
+  console.log("Voter ID from URL:", voterIDFromURL);
+
+  async function fetchVoterData(voterID) {
+    try {
+      const docRef = doc(db, "voters", voterID);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        document.getElementById("voterName").textContent = data.name || "N/A";
+        document.getElementById("voterDOB").textContent = data.dob || "N/A";
+        document.getElementById("voterID").textContent = data.voterID || data.VOTERID || "N/A";
+        document.getElementById("voterFingerprint").textContent = data.fingerprint || "Not Available";
+      } else {
+        alert("Voter not found");
+      }
+    } catch (error) {
+      console.error("Error fetching voter data:", error);
+      alert("Error fetching voter data");
+    }
+  }
+
+  function adminLogin() {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      document.getElementById("loginCard").classList.add("hidden");
+      document.getElementById("voterCard").classList.remove("hidden");
+      fetchVoterData(voterIDFromURL);
+    } else {
+      alert("Invalid credentials");
+    }
+  }
+
+  document.getElementById("loginBtn").addEventListener("click", adminLogin);
+</script>
+
+</body>
+</html>
